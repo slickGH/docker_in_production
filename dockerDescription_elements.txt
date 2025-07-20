@@ -1,0 +1,177 @@
+🧱 1. Image Docker
+Définition : Une image est un modèle figé (immutable) qui contient tout ce qu’il faut pour exécuter une application : le système de fichiers, le code source, les bibliothèques, les dépendances, les variables d’environnement, etc.
+
+Caractéristiques :
+
+Crée à partir d’un fichier Dockerfile.
+
+Peut être partagée (via Docker Hub ou un registre privé).
+
+Elle ne s’exécute pas directement : elle sert de base pour créer un conteneur.
+
+Exemple : Une image python:3.11-slim contient une version minimale de Python 3.11.
+
+📦 2. Conteneur
+Définition : Un conteneur est une instance en cours d’exécution d’une image.
+
+Caractéristiques :
+
+Il est éphémère par défaut (sauf si vous le configurez autrement).
+
+Il a son propre espace d’exécution isolé (réseau, système de fichiers, processus, etc.).
+
+Il peut être démarré, arrêté, redémarré ou supprimé.
+
+Différence principale avec une image : Une image est statique et ne bouge pas, tandis qu’un conteneur est dynamique et vit en mémoire.
+
+📁 3. Volume
+Définition : Un volume est un mécanisme de persistance des données dans Docker.
+
+Caractéristiques :
+
+Stocké en dehors du système de fichiers du conteneur, donc non effacé quand le conteneur est supprimé.
+
+Utile pour stocker des données (bases de données, fichiers générés, configurations, etc.).
+
+Peut être partagé entre plusieurs conteneurs.
+
+Exemple : docker run -v nom_du_volume:/data ... monte un volume à l’intérieur du conteneur dans le dossier /data.
+
+🔨 4. Build (construction)
+Définition : Le build est le processus de création d’une image Docker à partir d’un Dockerfile.
+
+Caractéristiques :
+
+Exécute étape par étape les instructions du Dockerfile.
+
+Résulte en une image Docker, prête à être utilisée ou poussée sur un registre.
+
+Commande : docker build -t mon_image .
+
+Exemple : Vous écrivez un Dockerfile avec des instructions comme FROM, COPY, RUN, puis vous le construisez pour obtenir une image.
+
+Résumé visuel :
+Élément     Rôle	                    Persistant ?	    Dynamique ?	    Créé à partir de
+Image	    Modèle figé d’une app	    Oui	                Non	            Dockerfile
+Conteneur	Instance de l’image	        Non (par défaut)    Oui	            Image
+Volume	    Stockage persistant	        Oui	                Non	            Docker/Disk
+Build	    Action de créer une image	N/A	                N/A	            Dockerfile
+
+
+
+Un schéma visuel clair qui illustre les relations entre image, build, conteneur et volume dans Docker :
+
+                     ┌────────────────────┐
+                     │    Dockerfile      │
+                     └────────┬───────────┘
+                              │
+                              ▼
+                        🔨 docker build
+                              │
+                              ▼
+                     ┌────────────────────┐
+                     │     IMAGE          │
+                     │  (modèle figé)     │
+                     └────────┬───────────┘
+                              │
+                         docker run
+                              │
+                              ▼
+                  ┌────────────────────────┐
+                  │      CONTENEUR         │
+                  │ (instance de l'image)  │
+                  └──────────┬─────────────┘
+                             │
+                             │
+              ┌──────────────▼──────────────┐
+              │         VOLUME              │
+              │ (stockage persistant,       │
+              │   externe au conteneur)     │
+              └─────────────────────────────┘
+
+
+Lecture du schéma :
+Dockerfile → sert à construire une image (via docker build).
+
+Image → sert de modèle pour exécuter un conteneur (via docker run).
+
+Conteneur → est l'instance active de l’image, dans un environnement isolé.
+
+Volume → permet de stocker des données en dehors du conteneur, afin qu'elles persistent.
+
+
+Un exemple complet et réaliste d’un petit projet Docker, avec les éléments suivants :
+    Un fichier Python (app.py)
+    Un Dockerfile pour construire l'image
+    Une commande docker build pour créer l'image
+    Une commande docker run avec un volume pour persister des données
+
+📁 Structure du projet :
+Copier
+Modifier
+mon_projet/
+├── app.py
+└── Dockerfile
+
+
+📄 app.py (un simple script qui écrit dans un fichier)
+
+# app.py
+import os
+
+fichier = "/data/log.txt"  # dossier monté par le volume
+
+with open(fichier, "a") as f:
+    f.write("L'application a été lancée.\n")
+
+print("Écriture terminée.")
+
+
+
+🐳 Dockerfile
+
+# Base légère avec Python
+FROM python:3.11-slim
+
+# Crée un dossier pour les volumes (optionnel)
+RUN mkdir -p /data
+
+# Copie le script dans l'image
+COPY app.py /app/app.py
+
+# Définit le dossier de travail
+WORKDIR /app
+
+# Commande de lancement par défaut
+CMD ["python", "app.py"]
+
+
+🔨 Étape 1 : Construction de l’image
+Dans le dossier mon_projet, exécutez :
+
+docker build -t mon_app_image .
+Cela va construire une image nommée mon_app_image à partir du Dockerfile.
+
+
+▶️ Étape 2 : Exécution du conteneur avec un volume
+
+docker run --rm -v mon_volume_donnees:/data mon_app_image
+
+    --rm : supprime le conteneur après exécution.
+    -v mon_volume_donnees:/data : monte un volume Docker nommé mon_volume_donnees dans le dossier /data du conteneur.
+    mon_app_image : nom de l’image que vous avez construite.
+
+
+📂 Étape 3 : Lire le contenu du volume
+Pour inspecter ce que l'application a écrit :
+
+docker run --rm -v mon_volume_donnees:/data busybox cat /data/log.txt
+Cette commande utilise une image légère busybox juste pour afficher le contenu du fichier.
+
+
+🧠 Résumé du cycle :
+    Dockerfile définit comment construire l'image.
+    docker build crée l'image (mon_app_image).
+    docker run crée un conteneur à partir de l'image.
+    Le volume monté permet à l'application d’écrire des données persistantes.
+    Même si le conteneur est supprimé (--rm), le volume persiste.
