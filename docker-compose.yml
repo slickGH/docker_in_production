@@ -13,7 +13,9 @@ services:
     image: mariadb # Utilisation de l'image officielle de MariaDB
     container_name: nextcloud_db # Nom du conteneur pour la base de données
     restart: always
-    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW # Commande pour configurer MariaDB
+    ports:
+      - "3306:3306" # Exposition du port 3306 pour la base de données
     volumes:
       - ./db:/var/lib/mysql
     environment:
