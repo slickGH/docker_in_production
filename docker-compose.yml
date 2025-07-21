@@ -5,6 +5,9 @@
 # Un volume nommé "nextcloud" (managé par Docker) sera créé pour rendre persistant
 # le dossier "/var/www/html" du conteneur
 
+# EXECUTER LE DOCKER COMPOSE AVEC LA COMMANDE :
+# docker compose -f 'docker_in_production\docker-compose.yml' up -d --build 'nextcloud_app'                                                                                                         
+
 services:
   nextcloud_db:
     image: mariadb # Utilisation de l'image officielle de MariaDB
@@ -28,9 +31,15 @@ services:
     links:
       - nextcloud_db # Lien vers le conteneur de la base de données
     volumes:
-      - ./data:/var/www/html
+      - ./nextcloud:/var/www/html # Volume pour rendre persistant le dossier de Nextcloud
     environment:
-      - MYSQL_HOST=${nextcloud_db}  # Nom du conteneur de la base de données
+      - MYSQL_HOST=nextcloud_db # Nom du conteneur de la base de données
       - MYSQL_DATABASE=${NEXTCLOUD_MYSQL_DATABASE}  # Nom de la base de données
       - MYSQL_USER=${NEXTCLOUD_MYSQL_USER}  # Nom de l'utilisateur de la base de données
       - MYSQL_PASSWORD=${NEXTCLOUD_MYSQL_PASSWORD}  # Mot de passe utilisateur de la bdd
+  
+volumes:
+  nextcloud: # Volume pour Nextcloud
+    driver: local # Utilisation du driver local pour le volume
+  db: # Volume pour la base de données
+    driver: local # Utilisation du driver local pour le volume  
